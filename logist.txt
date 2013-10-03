@@ -1,0 +1,22 @@
+Logist Platform RAW Log Output:
+===============================
+
+
+Starting date : jeu. sept. 26 13:32:28 CEST 2013
+Starting time : 13:32:29
+
+General environnement info:
+
+	java-vendor     : Oracle Corporation
+	java-vendor-url : http://java.oracle.com/
+	java-version    : 1.7.0_09
+	os-arch         : x86_64
+	os-name         : Mac OS X
+	user-name       : quentin
+	cache-size      : 5
+	max-entries     : 0
+	debug-level     : debug
+
+
+Log file entries:
+
