@@ -20,7 +20,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 	private Model model;
 
 	@Override
-	public void setup(Topology topology, TaskDistribution td, Agent agent) {
+	public void setup(Topology topology, TaskDistribution taskDistribution, Agent agent) {
 
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
@@ -28,7 +28,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 
 		this.random = new Random();
 		this.pPickup = discount;
-		model = new Model(topology, td, agent.vehicles().get(0), discount);
+		model = new Model(topology, taskDistribution, agent.vehicles().get(0), discount);
 		model.computeReinforcementLearningAlgorithm();
 		
 	}
