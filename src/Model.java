@@ -1,6 +1,6 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.TreeMap;
 
 import logist.simulation.Vehicle;
 import logist.task.TaskDistribution;
@@ -33,6 +33,7 @@ public class Model {
 					states.add(new State(currentCity, packetDestination));
 				}
 			}
+			states.add(new State(currentCity, null));
 		}
 	}
 
@@ -41,13 +42,17 @@ public class Model {
 			for (City city : state.currentCity.neighbors()) {
 				state.actions.add(city);
 			}
-			state.actions.add(state.packetDestination);
+			
+			if(!state.actions.contains(state.packetDestination) && state.packetDestination != null){
+				state.actions.add(state.packetDestination);
+			}
 		}
 	}
 
-	public void computeReinforcementLearningAlgorithm() {
+	public HashMap<State, City> computeReinforcementLearningAlgorithm() {
 
 		HashMap<State, Double> V = new HashMap<State, Double>();
+		HashMap<State, City> B = new HashMap<State, City>();
 
 		for (State state : states) {
 			V.put(state, 0.0);
@@ -73,14 +78,36 @@ public class Model {
 					for (State s_prime : states) {
 						sum += V.get(s_prime) * taskDistribution.probability(a, s_prime.currentCity);
 					}
-					Q.get(s).put(a,
-									(taskDistribution.reward(s.currentCity, a)
-									- a.distanceTo(s.currentCity) * vehicle.costPerKm())
-									+ discount * sum);
+					
+					if(a.equals(s.packetDestination)){
+						Q.get(s).put(a,
+										taskDistribution.reward(s.currentCity, a)
+										- a.distanceTo(s.currentCity) * vehicle.costPerKm()
+										+ discount * sum);
+					} else {
+						Q.get(s).put(a,
+								- a.distanceTo(s.currentCity) * vehicle.costPerKm()
+								+ discount * sum);
+					}
 				}
-
-				V.put(s, Collections.max(Q.get(s).values()));
-
+				
+				
+				double max = 0.0;
+				City max_index = null;
+				for(City c: Q.get(s).keySet()){
+					if(Q.get(s).get(c) > max){
+						max = Q.get(s).get(c);
+						max_index = c;
+					}
+				}
+				
+				V.put(s, max);
+				B.put(s, max_index);
+				
+				
+				if(V.get(s).equals(Double.NaN)){
+					System.exit(0);
+				}
 				/*
 				 *	repeat
 				 *		for s ∈ S do
@@ -94,9 +121,9 @@ public class Model {
 
 			}
 			i++;
-		} while (i < 1000);
-
-		System.out.println(V);
+		} while (i < 100);
+		
+		return B;
 
 	}
 
@@ -111,6 +138,28 @@ class State {
 		this.currentCity = current;
 		this.packetDestination = packetDestination;
 		actions = new ArrayList<Topology.City>();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		State s = (State) obj;
+		//return this.currentCity.equals(s.currentCity) && this.packetDestination.equals(s.packetDestination);
+		//System.out.println(s);
+		//System.out.println(this);
+		return s.toString().equals(this.toString());
+		
+		
+	}
+	
+	@Override
+	public int hashCode() {
+		//System.out.println("Java c'est de la merde");
+		return this.toString().hashCode();
+	}
+	
+	@Override
+	public String toString() {
+		return "("+this.currentCity+" -> "+this.packetDestination+")";
 	}
 }
 

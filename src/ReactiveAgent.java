@@ -1,5 +1,6 @@
 
 
+import java.util.HashMap;
 import java.util.Random;
 
 import logist.agent.Agent;
@@ -18,6 +19,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 	private Random random;
 	private double pPickup;
 	private Model model;
+	HashMap<State, City> B;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution taskDistribution, Agent agent) {
@@ -29,20 +31,30 @@ public class ReactiveAgent implements ReactiveBehavior {
 		this.random = new Random();
 		this.pPickup = discount;
 		model = new Model(topology, taskDistribution, agent.vehicles().get(0), discount);
-		model.computeReinforcementLearningAlgorithm();
+		B = model.computeReinforcementLearningAlgorithm();
+		
 		
 	}
 
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask) {
 		Action action;
-
-		if (availableTask == null || random.nextDouble() > pPickup) {
-			City currentCity = vehicle.getCurrentCity();
-			action = new Move(currentCity.randomNeighbor(random));
+		State s;
+		if(availableTask != null){
+			s = new State(vehicle.getCurrentCity(), availableTask.deliveryCity);
 		} else {
-			action = new Pickup(availableTask);
+			s = new State(vehicle.getCurrentCity(), null);
 		}
+		
+		City dest = B.get(s);
+		System.out.println(B.containsKey(s));
+		
+		if(availableTask != null && dest.equals(availableTask.deliveryCity)){
+			action = new Pickup(availableTask);
+		}else{
+			action = new Move(dest);
+		}
+		
 		return action;
 	}
 }
