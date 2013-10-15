@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeMap;
 
 import logist.simulation.Vehicle;
 import logist.task.TaskDistribution;
@@ -12,7 +11,7 @@ public class Model {
 	private ArrayList<State> states;
 	private Topology topology;
 	private Vehicle vehicle;
-	TaskDistribution taskDistribution;
+	private TaskDistribution taskDistribution;
 	double discount;
 
 	public Model(Topology topology, TaskDistribution taskDistribution, Vehicle vehicle, double discount) {
@@ -20,7 +19,7 @@ public class Model {
 		this.taskDistribution = taskDistribution;
 		this.vehicle = vehicle;
 		this.discount = discount;
-		states = new ArrayList<State>();
+		this.states = new ArrayList<State>();
 
 		generateStates();
 		generateActions();
@@ -43,16 +42,20 @@ public class Model {
 				state.actions.add(city);
 			}
 			
-			if(!state.actions.contains(state.packetDestination) && state.packetDestination != null){
+			if (!state.actions.contains(state.packetDestination) && state.packetDestination != null) {
 				state.actions.add(state.packetDestination);
 			}
 		}
 	}
 
+	
 	public HashMap<State, City> computeReinforcementLearningAlgorithm() {
 
+		/*
+		 * Initialisation
+		 */
 		HashMap<State, Double> V = new HashMap<State, Double>();
-		HashMap<State, Double> V_old = new HashMap<State, Double>();
+		HashMap<State, Double> oldV = new HashMap<State, Double>();
 		HashMap<State, City> B = new HashMap<State, City>();
 
 		for (State state : states) {
@@ -62,6 +65,7 @@ public class Model {
 		HashMap<State, HashMap<City, Double>> Q = new HashMap<State, HashMap<City, Double>>();
 
 		for (State state : states) {
+			
 			HashMap<City, Double> tmp = new HashMap<City, Double>();
 
 			for (City action : state.actions) {
@@ -69,48 +73,81 @@ public class Model {
 			}
 
 			Q.put(state, tmp);
+			
 		}
 
-		int i = 0;
+		/*
+		 * Algorithm
+		 *
+		 *	repeat
+		 *		for s ∈ S do
+		 *			for a ∈ A do
+		 *				Q(s,a) ← R(s,a) + γ × Σ(s′∈S) T(s,a,s′)×V(s)
+		 *			end for
+		 *			V (S) ← max(a) Q(s,a)
+		 *		end for
+		 *	until good enough
+		 *
+		 * With our model, action a is the chosen next city to go,
+		 * and T(s,a,s′) = p(a,s′), and R(s,a) = I×r(s,a) − cost(s,a),
+		 * with I = 1 if the task is accepted, 0 otherwise.
+		 * 
+		 */
+		
+		// repeat
 		do {
-			V_old = new HashMap<State, Double>(V);
+			
+			oldV = new HashMap<State, Double>(V);
+			
+			// for s ∈ S do
 			for (State s : states) {
-				System.out.println("For state: "+s + " #actions: "+s.actions.size());
+				System.out.println("For state " + s + ", #actions: " + s.actions.size());
+				
+				// for a ∈ A do
 				for (City a : s.actions) {
-					System.out.println("For action: "+a);
-					double sum = 0;
+					System.out.println("For action " + a);
+					double sum = 0.0;
 					double sum_proba = 0.0;
+					
+					// Σ(s′∈S) T(s,a,s)×V(s)
 					for (City s_prime : topology.cities()) {
-						if(!s_prime.equals(a)){
-							System.out.println("from: "+a+" to: "+s_prime+" p="+taskDistribution.probability(a, s_prime));
+						if (!s_prime.equals(a)) {
+							System.out.println("p(" + a + ", " + s_prime + ") = " + taskDistribution.probability(a, s_prime));
 							sum += V.get(new State(a, s_prime)) * taskDistribution.probability(a, s_prime);
 							sum_proba += taskDistribution.probability(a, s_prime);
 							System.out.println("***");
 						}
 						
 					}
+					
 					System.out.println(sum_proba);
-					sum += V.get(new State(a, null)) * (1-sum_proba);
-					//If we pick up the task
-					if(a.equals(s.packetDestination)){
-						Q.get(s).put(a,
-										taskDistribution.reward(s.currentCity, a)
+					
+					// transition probability if no task will be availaible is 1 − Σ(i,j,i≠j) p(i,j)
+					sum += V.get(new State(a, null)) * (1 - sum_proba);
+					
+					// Q(s,a) ← R(s,a) + γ × sum
+					// If we pick up the task
+					if (a.equals(s.packetDestination)) {
+						Q.get(s).put(a, taskDistribution.reward(s.currentCity, a)
 										- a.distanceTo(s.currentCity) * vehicle.costPerKm()
 										+ discount * sum);
-					} else { // We do not pick up the task
-						Q.get(s).put(a,
-								- a.distanceTo(s.currentCity) * vehicle.costPerKm()
-								+ discount * sum);
+					
+					// We do not pick up the task
+					} else {
+						Q.get(s).put(a, - a.distanceTo(s.currentCity) * vehicle.costPerKm()
+										+ discount * sum);
 					}
 					
 					System.out.println("**** end city ****");
 				}
 				
 				
+				// V (S) ← max(a) Q(s,a)
 				double max = 0.0;
 				City max_index = null;
-				for(City c: Q.get(s).keySet()){
-					if(Q.get(s).get(c) > max){
+				
+				for (City c : Q.get(s).keySet()) {
+					if (Q.get(s).get(c) > max) {
 						max = Q.get(s).get(c);
 						max_index = c;
 					}
@@ -119,41 +156,40 @@ public class Model {
 				V.put(s, max);
 				B.put(s, max_index);
 				
-				
-				if(V.get(s).equals(Double.NaN)){
-					System.exit(0);
-				}
-				/*
-				 *	repeat
-				 *		for s ∈ S do
-				 *			for a ∈ A do
-				 *				Q(s, a) ← R(s, a) + γ
-				 *			end for
-				 *			V (S) ← maxa Q(s, a)
-				 *		end for
-				 *	until good enough
-				 */
 				System.out.println("********** end state *********");
 			}
-			i++;
-			double diff = 0.0;
-			Object[] v = V.values().toArray();
-			Object[] v_old = V_old.values().toArray();
-			 for (int j = 0; j < V.values().size(); j++) {
-				 
-				diff += Double.valueOf(v[j].toString()) - Double.valueOf(v_old[j].toString());
-			}
-			 
-			 System.out.println(i+" : "+diff);
-		} while (i < 100);
+		
+		// until good enough
+		} while (!goodEnough(V, oldV));
 		
 		return B;
 
 	}
-
+	
+	
+	/**
+	 * Until good enough = until goodEnough().
+	 */
+	private boolean goodEnough(HashMap<State, Double> V, HashMap<State, Double> oldV) {
+		
+		double epsilon = 1E-5;
+		double diff = 0.0;
+		
+		Double[] v = (Double[]) V.values().toArray(new Double[V.values().size()]);
+		Double[] oldv = (Double[]) oldV.values().toArray(new Double[oldV.values().size()]);
+		
+		for (int i = 0; i < V.values().size(); i++) {
+			diff += v[i] - oldv[i];
+		}
+		
+		return diff <= epsilon;
+		
+	}
+	
 }
 
 class State {
+	
 	protected City currentCity;
 	protected City packetDestination; // either City or ∅
 	protected ArrayList<City> actions;
@@ -166,27 +202,22 @@ class State {
 	
 	@Override
 	public boolean equals(Object obj) {
+		if (obj == null) return false;
 		State s = (State) obj;
+		if (s == this) return true;
 		//return this.currentCity.equals(s.currentCity) && this.packetDestination.equals(s.packetDestination);
-		//System.out.println(s);
-		//System.out.println(this);
-		return s.toString().equals(this.toString());
-		
+		return s.toString().equals(this.toString()); // Problem?
 		
 	}
 	
 	@Override
 	public int hashCode() {
-		//System.out.println("Java c'est de la merde");
 		return this.toString().hashCode();
 	}
 	
 	@Override
 	public String toString() {
-		return "("+this.currentCity+" -> "+this.packetDestination+")";
+		return "(" + this.currentCity + " → " + this.packetDestination + ")";
 	}
+	
 }
-
-/*class Action {
-
-}*/

@@ -1,7 +1,4 @@
-
-
 import java.util.HashMap;
-import java.util.Random;
 
 import logist.agent.Agent;
 import logist.behavior.ReactiveBehavior;
@@ -16,8 +13,8 @@ import logist.topology.Topology.City;
 
 public class ReactiveAgent implements ReactiveBehavior {
 
-	private Random random;
-	private double pPickup;
+//	private Random random;
+//	private double pPickup;
 	private Model model;
 	HashMap<State, City> B;
 
@@ -28,8 +25,8 @@ public class ReactiveAgent implements ReactiveBehavior {
 		// If the property is not present it defaults to 0.95
 		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
 
-		this.random = new Random();
-		this.pPickup = discount;
+//		this.random = new Random();
+//		this.pPickup = discount;
 		model = new Model(topology, taskDistribution, agent.vehicles().get(0), discount);
 		B = model.computeReinforcementLearningAlgorithm();
 		
@@ -47,9 +44,6 @@ public class ReactiveAgent implements ReactiveBehavior {
 		}
 		
 		City dest = B.get(s);
-		System.out.println(s);
-		System.out.println(B.containsKey(s));
-		System.out.println(dest);
 		
 		if(availableTask != null && dest.equals(availableTask.deliveryCity)){
 			action = new Pickup(availableTask);
