@@ -47,7 +47,9 @@ public class ReactiveAgent implements ReactiveBehavior {
 		}
 		
 		City dest = B.get(s);
+		System.out.println(s);
 		System.out.println(B.containsKey(s));
+		System.out.println(dest);
 		
 		if(availableTask != null && dest.equals(availableTask.deliveryCity)){
 			action = new Pickup(availableTask);

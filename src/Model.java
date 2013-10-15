@@ -52,6 +52,7 @@ public class Model {
 	public HashMap<State, City> computeReinforcementLearningAlgorithm() {
 
 		HashMap<State, Double> V = new HashMap<State, Double>();
+		HashMap<State, Double> V_old = new HashMap<State, Double>();
 		HashMap<State, City> B = new HashMap<State, City>();
 
 		for (State state : states) {
@@ -72,23 +73,37 @@ public class Model {
 
 		int i = 0;
 		do {
+			V_old = new HashMap<State, Double>(V);
 			for (State s : states) {
+				System.out.println("For state: "+s + " #actions: "+s.actions.size());
 				for (City a : s.actions) {
+					System.out.println("For action: "+a);
 					double sum = 0;
-					for (State s_prime : states) {
-						sum += V.get(s_prime) * taskDistribution.probability(a, s_prime.currentCity);
+					double sum_proba = 0.0;
+					for (City s_prime : topology.cities()) {
+						if(!s_prime.equals(a)){
+							System.out.println("from: "+a+" to: "+s_prime+" p="+taskDistribution.probability(a, s_prime));
+							sum += V.get(new State(a, s_prime)) * taskDistribution.probability(a, s_prime);
+							sum_proba += taskDistribution.probability(a, s_prime);
+							System.out.println("***");
+						}
+						
 					}
-					
+					System.out.println(sum_proba);
+					sum += V.get(new State(a, null)) * (1-sum_proba);
+					//If we pick up the task
 					if(a.equals(s.packetDestination)){
 						Q.get(s).put(a,
 										taskDistribution.reward(s.currentCity, a)
 										- a.distanceTo(s.currentCity) * vehicle.costPerKm()
 										+ discount * sum);
-					} else {
+					} else { // We do not pick up the task
 						Q.get(s).put(a,
 								- a.distanceTo(s.currentCity) * vehicle.costPerKm()
 								+ discount * sum);
 					}
+					
+					System.out.println("**** end city ****");
 				}
 				
 				
@@ -118,9 +133,18 @@ public class Model {
 				 *		end for
 				 *	until good enough
 				 */
-
+				System.out.println("********** end state *********");
 			}
 			i++;
+			double diff = 0.0;
+			Object[] v = V.values().toArray();
+			Object[] v_old = V_old.values().toArray();
+			 for (int j = 0; j < V.values().size(); j++) {
+				 
+				diff += Double.valueOf(v[j].toString()) - Double.valueOf(v_old[j].toString());
+			}
+			 
+			 System.out.println(i+" : "+diff);
 		} while (i < 100);
 		
 		return B;
@@ -163,6 +187,6 @@ class State {
 	}
 }
 
-class Action {
+/*class Action {
 
-}
+}*/
