@@ -172,7 +172,7 @@ public class Model {
 	 */
 	private boolean goodEnough(HashMap<State, Double> V, HashMap<State, Double> oldV) {
 		
-		double epsilon = 1E-5;
+		double epsilon = 1E-20;
 		double diff = 0.0;
 		
 		Double[] v = V.values().toArray(new Double[V.values().size()]);

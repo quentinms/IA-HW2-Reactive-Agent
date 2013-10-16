@@ -30,7 +30,6 @@ public class ReactiveAgent implements ReactiveBehavior {
 		model = new Model(topology, taskDistribution, agent.vehicles().get(0), discount);
 		B = model.computeReinforcementLearningAlgorithm();
 		
-		
 	}
 
 	@Override
