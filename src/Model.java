@@ -143,7 +143,7 @@ public class Model {
 				
 				
 				// V (S) ← max(a) Q(s,a)
-				double max = 0.0;
+				double max = Double.NEGATIVE_INFINITY;
 				City max_index = null;
 				
 				for (City c : Q.get(s).keySet()) {
@@ -175,8 +175,8 @@ public class Model {
 		double epsilon = 1E-5;
 		double diff = 0.0;
 		
-		Double[] v = (Double[]) V.values().toArray(new Double[V.values().size()]);
-		Double[] oldv = (Double[]) oldV.values().toArray(new Double[oldV.values().size()]);
+		Double[] v = V.values().toArray(new Double[V.values().size()]);
+		Double[] oldv = oldV.values().toArray(new Double[oldV.values().size()]);
 		
 		for (int i = 0; i < V.values().size(); i++) {
 			diff += v[i] - oldv[i];
