@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import logist.simulation.Vehicle;
 import logist.task.TaskDistribution;
@@ -60,6 +61,7 @@ public class Model {
 
 		for (State state : states) {
 			V.put(state, 0.0);
+			B.put(state, topology.randomCity(new Random()));
 		}
 
 		HashMap<State, HashMap<City, Double>> Q = new HashMap<State, HashMap<City, Double>>();
