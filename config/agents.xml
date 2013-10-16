@@ -13,7 +13,7 @@
 	<agent name="reactive-agent">
 		<set class-path="bin/"/>
 		<set class-name="ReactiveAgent"/>
-		<set discount-factor=".85"/>
+		<set discount-factor=".9"/>
 	</agent>
 	
 </agents>
