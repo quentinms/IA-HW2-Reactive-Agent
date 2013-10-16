@@ -16,7 +16,7 @@ public class ReactiveAgent implements ReactiveBehavior {
 //	private Random random;
 //	private double pPickup;
 	private Model model;
-	HashMap<State, City> B;
+	private HashMap<State, City> B;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution taskDistribution, Agent agent) {
@@ -34,9 +34,11 @@ public class ReactiveAgent implements ReactiveBehavior {
 
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask) {
+		
 		Action action;
 		State s;
-		if(availableTask != null){
+		
+		if (availableTask != null) {
 			s = new State(vehicle.getCurrentCity(), availableTask.deliveryCity);
 		} else {
 			s = new State(vehicle.getCurrentCity(), null);
@@ -44,12 +46,13 @@ public class ReactiveAgent implements ReactiveBehavior {
 		
 		City dest = B.get(s);
 		
-		if(availableTask != null && dest.equals(availableTask.deliveryCity)){
+		if (availableTask != null && dest.equals(availableTask.deliveryCity)) {
 			action = new Pickup(availableTask);
-		}else{
+		} else {
 			action = new Move(dest);
 		}
 		
 		return action;
+		
 	}
 }
